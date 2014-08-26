@@ -44,7 +44,7 @@ module ActsAsTaggableOn
 
     module InstanceMethods
       ##
-      # Tag a taggable model with tags that are owned by the tagger.
+      # Reset owned tag list on taggable.
       #
       # @param taggable The object that will be tagged
       # @param [Hash] options An hash with options. Available options are:
@@ -63,6 +63,29 @@ module ActsAsTaggableOn
         fail "No context :#{opts[:on]} defined in #{taggable.class}" unless opts[:force] || taggable.tag_types.include?(opts[:on])
 
         taggable.set_owner_tag_list_on(self, opts[:on].to_s, opts[:with])
+        taggable.save unless skip_save
+      end
+
+      ##
+      # Add owned tags to tag list on taggable.
+      #
+      # @param taggable The object that will be tagged
+      # @param [Hash] options An hash with options. Available options are:
+      #               * <tt>:with</tt> - The tags that you want to
+      #               * <tt>:on</tt>   - The context on which you want to tag
+      #
+      # Example:
+      #   @user.tag(@photo, :with => "paris, normandy", :on => :locations)
+      def add_tag(taggable, opts={})
+        opts.reverse_merge!(force: true)
+        skip_save = opts.delete(:skip_save)
+        return false unless taggable.respond_to?(:is_taggable?) && taggable.is_taggable?
+
+        fail 'You need to specify a tag context using :on' unless opts.key?(:on)
+        fail 'You need to specify some tags using :with' unless opts.key?(:with)
+        fail "No context :#{opts[:on]} defined in #{taggable.class}" unless opts[:force] || taggable.tag_types.include?(opts[:on])
+
+        taggable.add_to_owner_tag_list_on(self, opts[:on].to_s, opts[:with])
         taggable.save unless skip_save
       end
 

@@ -66,6 +66,11 @@ module ActsAsTaggableOn::Taggable
       cache[owner] = ActsAsTaggableOn::TagListParser.parse(new_list)
     end
 
+    def add_to_owner_tag_list_on(owner, context, list)
+      set_owner_tag_list_on(owner, context, list)
+      instance_variable_set("@add", true)
+    end
+
     def reload(*args)
       self.class.tag_types.each do |context|
         instance_variable_set("@owned_#{context}_list", nil)
@@ -108,9 +113,11 @@ module ActsAsTaggableOn::Taggable
 
           # Find all taggings that belong to the taggable (self), are owned by the owner,
           # have the correct context, and are removed from the list.
-          #ActsAsTaggableOn::Tagging.destroy_all(taggable_id: id, taggable_type: self.class.base_class.to_s,
-          #                                                  tagger_type: owner.class.base_class.to_s, tagger_id: owner.id,
-          #                                                  tag_id: old_tags, context: context) if old_tags.present?
+          if !instance_variable_get("@add")
+            ActsAsTaggableOn::Tagging.destroy_all(taggable_id: id, taggable_type: self.class.base_class.to_s,
+                                                            tagger_type: owner.class.base_class.to_s, tagger_id: owner.id,
+                                                            tag_id: old_tags, context: context) if old_tags.present?
+          end
 
           # Create new taggings:
           new_tags.each do |tag|

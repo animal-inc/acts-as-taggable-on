@@ -32,6 +32,17 @@ describe 'Tagger' do
     expect(TaggableModel.tagged_with(%w(ruby scheme), owned_by: @user2).count).to eq(2)
   end
 
+  it 'should not reset tag list when add_tag is used' do
+    @user = User.new
+    @taggable = TaggableModel.create(name: 'Jim Jones')
+
+    @user.add_tag(@taggable, with: 'ruby', on: :tags)
+    @user.add_tag(@taggable, with: 'java', on: :tags)
+    tags = TaggableModel.tagged_with(%w(ruby java), owned_by: @user, any: true)
+    expect(tags).to include(@taggable)
+    expect(tags.size).to eq(1)
+  end
+
   it 'only returns objects tagged by owned_by when any is true' do
     @user2 = User.new
     @taggable2 = TaggableModel.create(name: 'Jim Jones')
